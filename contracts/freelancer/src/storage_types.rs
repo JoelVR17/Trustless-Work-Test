@@ -21,3 +21,8 @@ pub struct Project {
     pub cancelled: bool,
     pub completed: bool,
 }
+
+#[contracttype]
+pub enum DataKey {
+    Project(u128),
+}
