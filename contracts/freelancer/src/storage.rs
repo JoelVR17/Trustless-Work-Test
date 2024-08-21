@@ -1,34 +1,20 @@
-use core::ptr::null;
+use soroban_sdk::{contracttype, Env, Symbol};
 
-use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
-
-use crate::storage_types::Project;
+use crate::storage_types::{ Project, DataKey };
 
 #[derive(Clone)]
 #[contracttype]
 
-enum DataKey {
+enum DataKeyAddress {
     Initialized,
     TotalAddress,
     Shares(u32),
     Addresses(u32),
 }
 
-pub fn get_address(e: &Env, index: u32) -> Address {
-    e.storage()
-        .instance()
-        .get(&DataKey::Addresses(index))
-        .unwrap()
-}
-
-pub fn get_project(e: &Env, project_id: u128) -> (Project, Symbol) {
+pub fn get_project(e: &Env, project_id: u128) -> (Project, DataKey) {
     // Obtener la clave del proyecto
-    let mut key_bytes = [0u8; 32];
-    let prefix_bytes = b"project_";
-    key_bytes[..8].copy_from_slice(prefix_bytes);
-    key_bytes[8..16].copy_from_slice(&project_id.to_le_bytes());
-    let key_str = core::str::from_utf8(&key_bytes).unwrap();
-    let project_key = Symbol::new(&e, key_str);
+    let project_key = DataKey::Project(project_id);
 
     // Obtener el proyecto del almacenamiento
     let project: Project = e.storage().instance().get(&project_key).unwrap();
@@ -37,19 +23,8 @@ pub fn get_project(e: &Env, project_id: u128) -> (Project, Symbol) {
     (project, project_key)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 // ! ESTAS 3 FUNCIONES ES PARA OBTENER LOS KEYS DE LOS PROYCTOS QUE SE GUARDAN, CUANDO YA SE TIENEN, SE ITERA PARA CREAR UN ARRAY CON TODOS LOS PROYECTOS Y RETORNARLOS A LA FUNCION `get_projects_by_freelancer` -> AUN NO SIRVE, PERO HAY QUE SEGUIR TRABAJANDO EN ELLO
+
 pub fn get_all_projects(e: &Env) -> Vec<Project> {
     let mut projects: Vec<Project> = Vec::new(&e);
     
@@ -66,7 +41,8 @@ pub fn get_all_projects(e: &Env) -> Vec<Project> {
     projects  // Devuelve el vector de proyectos.
 }
 
-// Funciones para gestionar la lista de claves
+// Funciones para gestionar la lista de claves 👇
+
 pub fn get_project_keys(e: &Env) -> Vec<Symbol> {
     let mut keys: Vec<Symbol> = Vec::new(e);
     
@@ -90,6 +66,6 @@ pub fn set_project_keys(e: &Env, keys: &[Symbol]) {
     e.storage().persistent().set(&key, &keys.to_vec());
 }
 
-// pub fn get_total_address(e: &Env) -> u32 {
-//     e.storage().instance().get(&DataKey::TotalAddress).unwrap()
-// }
+pub fn get_total_address(e: &Env) -> u32 {
+    e.storage().instance().get(&DataKeyAddress::TotalAddress).unwrap()
+}
