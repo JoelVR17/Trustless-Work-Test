@@ -1,11 +1,13 @@
 use soroban_sdk::{Env, Symbol, vec, IntoVal, Val, Address, Vec};
 
+use crate::storage_types::DataKey;
+
 // ! HAY UN EVENTO EN SOLIDITY LLAMADO ||FundsWithdrawn|| QUE NUNCA SE USA
 
 // ------ Projects
 
 // Event for project created
-pub (crate) fn project_created(e: &Env, project_id: Symbol, client: Address, freelancer: Address, prices: Vec<u128>) {
+pub (crate) fn project_created(e: &Env, project_id: DataKey, client: Address, freelancer: Address, prices: Vec<u128>) {
     
     // Create message
     let topics = (Symbol::new(e, "The project has been successfully created"),);
@@ -21,7 +23,7 @@ pub (crate) fn project_created(e: &Env, project_id: Symbol, client: Address, fre
 }
 
 // Event for project completed
-pub (crate) fn project_completed(e: &Env, project_id: Symbol) {
+pub (crate) fn project_completed(e: &Env, project_id: DataKey) {
     
     // Create message
     let topics = (Symbol::new(e, "The project has been successfully completed"),);
@@ -32,7 +34,7 @@ pub (crate) fn project_completed(e: &Env, project_id: Symbol) {
 }
 
 // Event for project cancelled
-pub (crate) fn project_cancelled(e: &Env, project_id: Symbol) {
+pub (crate) fn project_cancelled(e: &Env, project_id: DataKey) {
     
     // Create message
     let topics = (Symbol::new(e, "The project has been successfully cancelled"),);
@@ -43,7 +45,7 @@ pub (crate) fn project_cancelled(e: &Env, project_id: Symbol) {
 }
 
 // Event for project refunded
-pub (crate) fn project_refunded(e: &Env, project_id: Symbol, client: Address, price: u128) {
+pub (crate) fn project_refunded(e: &Env, project_id: DataKey, client: Address, price: u128) {
     
     // Create message
     let topics = (Symbol::new(e, "The project has been successfully refunded"),);
@@ -62,7 +64,7 @@ pub (crate) fn project_refunded(e: &Env, project_id: Symbol, client: Address, pr
 // ------ Objectives
 
 // Event for objective added
-pub (crate) fn objective_added(e: &Env, project_id: Symbol, objective_id: u128, price: u128) {
+pub (crate) fn objective_added(e: &Env, project_id: &DataKey, objective_id: u128, price: u128) {
     
     // Create message
     let topics = (Symbol::new(e, "The objective has been successfully added"),);
@@ -77,7 +79,7 @@ pub (crate) fn objective_added(e: &Env, project_id: Symbol, objective_id: u128, 
 }
 
 // Event for objective funded
-pub (crate) fn objective_funded(e: &Env, project_id: Symbol, objective_id: u128, half_price: u128) {
+pub (crate) fn objective_funded(e: &Env, project_id: DataKey, objective_id: u128, half_price: u128) {
     
     // Create message
     let topics = (Symbol::new(e, "The objective has been successfully funded"),);
@@ -92,7 +94,7 @@ pub (crate) fn objective_funded(e: &Env, project_id: Symbol, objective_id: u128,
 }
 
 // Event for objective funded
-pub (crate) fn objective_completed(e: &Env, project_id: Symbol, objective_id: u128, full_price: u128) {
+pub (crate) fn objective_completed(e: &Env, project_id: DataKey, objective_id: u128, full_price: u128) {
     
     // Create message
     let topics = (Symbol::new(e, "The objective has been successfully completed"),);
