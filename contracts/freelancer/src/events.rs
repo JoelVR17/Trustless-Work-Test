@@ -1,8 +1,5 @@
 use soroban_sdk::{Env, Symbol, vec, IntoVal, Val, Address, Vec};
-
 use crate::storage_types::DataKey;
-
-// ! HAY UN EVENTO EN SOLIDITY LLAMADO ||FundsWithdrawn|| QUE NUNCA SE USA
 
 // ------ Projects
 

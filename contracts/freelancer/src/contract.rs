@@ -274,7 +274,7 @@ impl FreelanceContract {
     pub fn get_projects_by_freelancer(e: Env, freelancer: Address) -> Vec<Project> {
         
         // Obtener todos los proyectos
-        let all_projects = get_all_projects(&e);
+        let all_projects: Vec<Project> = get_all_projects(e.clone());
 
         // Crear un vector para almacenar los proyectos que pertenecen al freelancer
         let mut result: Vec<Project> = Vec::new(&e);
