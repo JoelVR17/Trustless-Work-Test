@@ -4,7 +4,7 @@ use soroban_sdk::{
 
 use crate::storage::{get_project, get_all_projects};
 use crate::storage_types::{Objective, Project, DataKey};
-use crate::events::{project_created, objective_added, objective_completed, objective_funded, project_cancelled, project_completed};
+use crate::events::{project_created, objective_added, objective_completed, objective_funded, project_cancelled, project_completed, project_refunded};
 
 #[contract]
 pub struct FreelanceContract;
@@ -167,7 +167,7 @@ impl FreelanceContract {
             panic!("Only the client can mark the project as completed");
         }
 
-        // Check if the project is cancelled
+        // Check if the project is completed
         if !project.completed {
             panic!("Project is completed");
         }
@@ -271,6 +271,57 @@ impl FreelanceContract {
         objective_funded(&e, project_key, objective_id, half_price as u128);
     }
 
+    pub fn refund_remaining_funds(e: Env, project_id: u128, objective_id: u128, user: Address) {
+        user.require_auth();
+        // Obtener el proyecto
+        let (mut project, project_key) = get_project(&e, project_id);
+
+        // Verificar que la persona que invoca la función es el cliente
+        let invoker = user.clone();
+        if invoker != project.client {
+            panic!("Only the client can mark the project as completed");
+        }
+
+        // Check if the project is cancelled
+        if !project.cancelled {
+            panic!("Project is cancelled");
+        }
+
+
+        let mut refundableAmount : i128 = 0;
+
+        for i in 0..project.objectives_count {
+            // Obtener el objetivo del proyecto
+            let mut objective = project.objectives.get(objective_id).unwrap(); 
+
+
+            //Objective storage objective = project.objectives[i];
+            if !objective.completed && objective.half_paid > 0 {
+                refundableAmount += objective.half_paid as i128;
+                objective.half_paid = 0; // Prevent double refund
+            }
+        }
+
+        let usdc_client = soroban_sdk::token::Client::new(&e, &user);
+        let mut contract_balance = usdc_client.balance(&e.current_contract_address());
+
+
+        // Determinar si el contrato tiene fondos suficientes 
+        if  contract_balance >= refundableAmount {
+            panic!("Insufficient contract balance");
+        }
+
+        // Transferir el precio total del objetivo al freelancer
+        usdc_client.transfer(
+            &e.current_contract_address(), // El contrato transfiere los fondos
+            &project.client,           // El freelancer es el receptor
+            &(refundableAmount as i128)     // El precio total del objetivo
+        );
+
+        project_refunded(&e, project_key, user.clone(), refundableAmount as u128);
+
+    }
+    
     pub fn get_projects_by_freelancer(e: Env, freelancer: Address) -> Vec<Project> {
         
         // Obtener todos los proyectos
