@@ -52,14 +52,6 @@ impl Token {
 
         receive_balance(&e, to.clone(), amount);
         TokenUtils::new(&e).events().mint(admin, to, amount);
-        
-        // let balance: i128 = e.storage().instance().get(&to).unwrap_or(0);
-        // e.storage().instance().set(&to, &(balance + amount));
-    
-        // e.events().publish(
-        //     (symbol_short!("mint"), to),
-        //     amount
-        // );
     }
 }
 

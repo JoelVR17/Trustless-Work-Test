@@ -1,8 +1,10 @@
 #![cfg(test)]
 
+extern crate std;
+
 use crate::storage_types::{Project, DataKey};
 use crate::{contract::FreelanceContract, FreelanceContractClient};
-use soroban_sdk::{testutils::Address as _, Address, Env, Vec, IntoVal};
+use soroban_sdk::{testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation}, Address, Env, Vec, IntoVal, symbol_short};
 use crate::token::{ Token, TokenClient };
 
 fn create_token<'a>(e: &Env, admin: &Address) -> TokenClient<'a> {
@@ -23,14 +25,22 @@ fn test_create_fund_complete_objectives() {
     let usdc_contract_id = env.register_contract(None, Token {});
     let token = create_token(&env, &admin1);
 
-    // token.initialize(
-    //     &client_address,
-    //     &7,
-    //     &"USDC".into_val(&env),
-    //     &"USD Coin".into_val(&env),
-    // );
-
     token.mint(&client_address, &1000);
+    assert_eq!(
+        env.auths(),
+        std::vec![(
+            admin1.clone(),
+            AuthorizedInvocation {
+                function: AuthorizedFunction::Contract((
+                    token.address.clone(),
+                    symbol_short!("mint"),
+                    (&client_address, 1000_i128).into_val(&env),
+                )),
+                sub_invocations: std::vec![]
+            }
+        )]
+    );
+    assert_eq!(token.balance(&client_address), 1000);
 
     let expiration_ledger = env.ledger().sequence() + 1000;
     token.approve(&client_address, &env.current_contract_address(), &(500i128), &expiration_ledger);
