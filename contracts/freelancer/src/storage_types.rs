@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Map};
+use soroban_sdk::{contracttype, Address, Map, String};
 
 pub(crate) const DAY_IN_LEDGERS: u32 = 17280;
 pub(crate) const INSTANCE_BUMP_AMOUNT: u32 = 7 * DAY_IN_LEDGERS;
@@ -43,10 +43,26 @@ pub struct AllowanceDataKey {
     pub spender: Address,
 }
 
+#[derive(Clone)]
+#[contracttype]
+pub struct User {
+    pub id: u64,
+    pub user: Address,
+    pub name: String,
+    pub email: String,
+    pub registered: bool,
+    pub timestamp: u64,
+}
+
 #[contracttype]
 pub enum DataKey {
     Project(u128),
     Balance(Address),
     Allowance(AllowanceDataKey),
-    Admin
+    Admin,
+
+    // User storage
+    User(Address),
+    UserRegId(Address),
+    UserCounter,
 }

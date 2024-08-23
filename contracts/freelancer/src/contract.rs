@@ -1,9 +1,9 @@
 use soroban_sdk::{
-    contract, contractimpl, Address, Env, Vec, Map, symbol_short
+    contract, contractimpl, Address, Env, Vec, Map, symbol_short, String
 };
 
 use crate::storage::{get_project, get_all_projects};
-use crate::storage_types::{Objective, Project, DataKey};
+use crate::storage_types::{Objective, Project, User, DataKey};
 use crate::token::TokenClient;
 use crate::events::{project_created, objective_added, objective_completed, objective_funded, project_cancelled, project_completed, project_refunded};
 
@@ -336,6 +336,65 @@ impl FreelanceContract {
         }
 
         result
+    }
+
+    
+    pub fn register(e: Env, user_address: Address, name: String, email: String) -> bool {
+        user_address.require_auth();
+
+        let key = DataKey::User(user_address.clone());
+
+        // Check if user already exists
+        if e.storage().persistent().has(&key) {
+            return false; // User already registered
+        }
+
+        let user_id = e
+            .storage()
+            .persistent()
+            .get(&DataKey::UserCounter)
+            .unwrap_or(0)
+            + 1;
+
+        e.storage()
+            .persistent()
+            .set(&DataKey::UserCounter, &user_id);
+
+        let user = User {
+            id: user_id,
+            user: user_address.clone(),
+            name: name.clone(),
+            email: email.clone(),
+            registered: true,
+            timestamp: e.ledger().timestamp(),
+        };
+
+        e.storage()
+            .persistent()
+            .set(&DataKey::User(user_address.clone()), &user);
+
+        // Generate a unique transaction ID (using the current ledger sequence number)
+        let user_reg_id = e.ledger().sequence();
+
+        // Store the transaction ID
+        e.storage()
+            .persistent()
+            .set(&DataKey::UserRegId(user_address.clone()), &user_reg_id);
+
+        //more checks to know if user successfully registered
+        return true;
+    }
+
+    pub fn login(e: Env, user_address: Address) -> String {
+        user_address.require_auth();
+    
+        let key = DataKey::User(user_address.clone());
+    
+        if let Some(user) = e.storage().persistent().get::<_, User>(&key) {
+            user.name
+        } else {
+            soroban_sdk::String::from_str(&e, "User not found")
+        }
     }
 
 }
