@@ -20,6 +20,11 @@ impl FreelanceContract {
         user: Address,
     ) -> u128 {
         user.require_auth();  
+
+        // Ensure prices are not empty
+        if prices.is_empty() {
+            panic!("Prices cannot be empty");
+        }
         
         let contract_key = symbol_short!("p");
         let mut project_count: u128 = e
