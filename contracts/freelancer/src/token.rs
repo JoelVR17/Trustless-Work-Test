@@ -1,10 +1,10 @@
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, String, Vec, Val};
+use soroban_sdk::{contract, contractimpl, Address, Env, String};
 use soroban_sdk::token::{self, Interface as _};
 use soroban_token_sdk::metadata::TokenMetadata;
 
 use crate::admin::{has_administrator, write_administrator, read_administrator};
 use crate::allowance::{read_allowance, write_allowance, spend_allowance};
-use crate::balance::receive_balance;
+use crate::balance::{receive_balance, read_balance, spend_balance};
 use crate::storage_types::{INSTANCE_BUMP_AMOUNT, INSTANCE_LIFETIME_THRESHOLD};
 use crate::metadata::write_metadata;
 use soroban_token_sdk::TokenUtils;
@@ -36,8 +36,6 @@ impl Token {
         };
     
         write_metadata(&e, metadata);
-    
-        e.events().publish((symbol_short!("init"),), Vec::<Val>::new(&e));
     }
 
     pub fn mint(e: Env, to: Address, amount: i128) {
@@ -58,79 +56,88 @@ impl Token {
 #[contractimpl]
 impl token::Interface for Token {
     fn allowance(e: Env, from: Address, spender: Address) -> i128 {
-        // Implementa la lógica de 'allowance' usando `read_allowance` de allowance.rs
-        let allowance_value = read_allowance(&e, from.clone(), spender.clone());
-        allowance_value.amount
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        read_allowance(&e, from, spender).amount
     }
 
     fn approve(e: Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
         from.require_auth();
+
         check_nonnegative_amount(amount);
-        write_allowance(&e, from.clone(), spender, amount, expiration_ledger);
+
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        write_allowance(&e, from.clone(), spender.clone(), amount, expiration_ledger);
+        TokenUtils::new(&e)
+            .events()
+            .approve(from, spender, amount, expiration_ledger);
     }    
 
     fn balance(e: Env, id: Address) -> i128 {
-        e.storage().instance().get(&id).unwrap_or(0)
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        read_balance(&e, id)
     }
 
     fn transfer(e: Env, from: Address, to: Address, amount: i128) {
         from.require_auth();
+
         check_nonnegative_amount(amount);
 
-        let from_balance: i128 = e.storage().instance().get(&from).unwrap_or(0);
-        if from_balance < amount {
-            panic!("Insufficient balance");
-        }
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        let to_balance: i128 = e.storage().instance().get(&to).unwrap_or(0);
-        e.storage().instance().set(&from, &(from_balance - amount));
-        e.storage().instance().set(&to, &(to_balance + amount));
+        spend_balance(&e, from.clone(), amount);
+        receive_balance(&e, to.clone(), amount);
+        TokenUtils::new(&e).events().transfer(from, to, amount);
     }
 
     fn transfer_from(e: Env, spender: Address, from: Address, to: Address, amount: i128) {
         spender.require_auth();
+
         check_nonnegative_amount(amount);
 
-        // Lógica para verificar y reducir el allowance usando spend_allowance
-        spend_allowance(&e, from.clone(), spender.clone(), amount);
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        // Reducir el balance y transferir
-        let from_balance: i128 = e.storage().instance().get(&from).unwrap_or(0);
-        if from_balance < amount {
-            panic!("Insufficient balance");
-        }
-
-        let to_balance: i128 = e.storage().instance().get(&to).unwrap_or(0);
-        e.storage().instance().set(&from, &(from_balance - amount));
-        e.storage().instance().set(&to, &(to_balance + amount));
+        spend_allowance(&e, from.clone(), spender, amount);
+        spend_balance(&e, from.clone(), amount);
+        receive_balance(&e, to.clone(), amount);
+        TokenUtils::new(&e).events().transfer(from, to, amount)
     }
 
     fn burn(e: Env, from: Address, amount: i128) {
         from.require_auth();
+
         check_nonnegative_amount(amount);
 
-        let from_balance: i128 = e.storage().instance().get(&from).unwrap_or(0);
-        if from_balance < amount {
-            panic!("Insufficient balance");
-        }
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        e.storage().instance().set(&from, &(from_balance - amount));
+        spend_balance(&e, from.clone(), amount);
+        TokenUtils::new(&e).events().burn(from, amount);
     }
 
     fn burn_from(e: Env, spender: Address, from: Address, amount: i128) {
         spender.require_auth();
+
         check_nonnegative_amount(amount);
 
-        // Verificar y reducir allowance usando spend_allowance
-        spend_allowance(&e, from.clone(), spender.clone(), amount);
+        e.storage()
+            .instance()
+            .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        // Reducir el balance
-        let from_balance: i128 = e.storage().instance().get(&from).unwrap_or(0);
-        if from_balance < amount {
-            panic!("Insufficient balance");
-        }
-
-        e.storage().instance().set(&from, &(from_balance - amount));
+        spend_allowance(&e, from.clone(), spender, amount);
+        spend_balance(&e, from.clone(), amount);
+        TokenUtils::new(&e).events().burn(from, amount)
     }
 
     fn decimals(e: Env) -> u32 {

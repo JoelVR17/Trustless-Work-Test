@@ -54,6 +54,7 @@ pub struct User {
     pub timestamp: u64,
 }
 
+#[derive(Clone)]
 #[contracttype]
 pub enum DataKey {
     Project(u128),

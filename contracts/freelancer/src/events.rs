@@ -1,4 +1,4 @@
-use soroban_sdk::{Env, Symbol, vec, IntoVal, Val, Address, Vec};
+use soroban_sdk::{Env, vec, IntoVal, Val, Address, Vec, symbol_short};
 use crate::storage_types::DataKey;
 
 // ------ Projects
@@ -7,7 +7,7 @@ use crate::storage_types::DataKey;
 pub (crate) fn project_created(e: &Env, project_id: DataKey, client: Address, freelancer: Address, prices: Vec<u128>) {
     
     // Create message
-    let topics = (Symbol::new(e, "The project has been successfully created"),);
+    let topics = (symbol_short!("p_created"),);
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -23,7 +23,7 @@ pub (crate) fn project_created(e: &Env, project_id: DataKey, client: Address, fr
 pub (crate) fn project_completed(e: &Env, project_id: DataKey) {
     
     // Create message
-    let topics = (Symbol::new(e, "The project has been successfully completed"),);
+    let topics = (symbol_short!("p_c"),); // c -> completed
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -34,7 +34,7 @@ pub (crate) fn project_completed(e: &Env, project_id: DataKey) {
 pub (crate) fn project_cancelled(e: &Env, project_id: DataKey) {
     
     // Create message
-    let topics = (Symbol::new(e, "The project has been successfully cancelled"),);
+    let topics = (symbol_short!("p_cd"),); // cd -> cancelled
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -45,7 +45,7 @@ pub (crate) fn project_cancelled(e: &Env, project_id: DataKey) {
 pub (crate) fn project_refunded(e: &Env, project_id: DataKey, client: Address, price: u128) {
     
     // Create message
-    let topics = (Symbol::new(e, "The project has been successfully refunded"),);
+    let topics = (symbol_short!("p_rd"),); // rd -> refunded
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -64,7 +64,7 @@ pub (crate) fn project_refunded(e: &Env, project_id: DataKey, client: Address, p
 pub (crate) fn objective_added(e: &Env, project_id: &DataKey, objective_id: u128, price: u128) {
     
     // Create message
-    let topics = (Symbol::new(e, "The objective has been successfully added"),);
+    let topics = (symbol_short!("ob_added"),);
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -79,7 +79,7 @@ pub (crate) fn objective_added(e: &Env, project_id: &DataKey, objective_id: u128
 pub (crate) fn objective_funded(e: &Env, project_id: DataKey, objective_id: u128, half_price: u128) {
     
     // Create message
-    let topics = (Symbol::new(e, "The objective has been successfully funded"),);
+    let topics = (symbol_short!("ob_funded"),);
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
@@ -94,7 +94,7 @@ pub (crate) fn objective_funded(e: &Env, project_id: DataKey, objective_id: u128
 pub (crate) fn objective_completed(e: &Env, project_id: DataKey, objective_id: u128, full_price: u128) {
     
     // Create message
-    let topics = (Symbol::new(e, "The objective has been successfully completed"),);
+    let topics = (symbol_short!("ob_c"),); // c -> completed
 
     // Convertir los valores a `Val`
     let project_id_val: Val = project_id.into_val(e);
