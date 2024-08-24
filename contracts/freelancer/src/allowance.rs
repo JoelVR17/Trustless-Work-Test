@@ -1,7 +1,6 @@
 use crate::storage_types::{AllowanceDataKey, AllowanceValue, DataKey};
 use soroban_sdk::{Address, Env};
 
-/// Leer la asignación (allowance) de un 'from' hacia un 'spender'.
 pub fn read_allowance(e: &Env, from: Address, spender: Address) -> AllowanceValue {
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
     if let Some(allowance) = e.storage().persistent().get::<_, AllowanceValue>(&key) {
@@ -21,7 +20,6 @@ pub fn read_allowance(e: &Env, from: Address, spender: Address) -> AllowanceValu
     }
 }
 
-/// Escribir una asignación (allowance) para un 'spender' con un monto y fecha de expiración.
 pub fn write_allowance(
     e: &Env,
     from: Address,
@@ -35,21 +33,21 @@ pub fn write_allowance(
     };
 
     if amount > 0 && expiration_ledger < e.ledger().sequence() {
-        panic!("expiration_ledger is less than ledger seq when amount > 0");
+        panic!("expiration_ledger is less than ledger seq when amount > 0")
     }
 
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
-    e.storage().persistent().set(&key, &allowance);
+    e.storage().temporary().set(&key.clone(), &allowance);
 
     if amount > 0 {
         let live_for = expiration_ledger
             .checked_sub(e.ledger().sequence())
             .unwrap();
-        e.storage().persistent().extend_ttl(&key, live_for, live_for);
+
+        e.storage().temporary().extend_ttl(&key, live_for, live_for)
     }
 }
 
-/// Gasto de la asignación (allowance) para realizar una transacción.
 pub fn spend_allowance(e: &Env, from: Address, spender: Address, amount: i128) {
     let allowance = read_allowance(e, from.clone(), spender.clone());
     if allowance.amount < amount {
