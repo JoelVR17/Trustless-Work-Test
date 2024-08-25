@@ -37,14 +37,14 @@ pub fn write_allowance(
     }
 
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
-    e.storage().temporary().set(&key.clone(), &allowance);
+    e.storage().persistent().set(&key.clone(), &allowance);
 
     if amount > 0 {
         let live_for = expiration_ledger
             .checked_sub(e.ledger().sequence())
             .unwrap();
 
-        e.storage().temporary().extend_ttl(&key, live_for, live_for)
+        e.storage().persistent().extend_ttl(&key, live_for, live_for)
     }
 }
 
