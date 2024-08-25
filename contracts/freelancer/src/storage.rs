@@ -42,6 +42,6 @@ pub fn get_all_projects(e: Env) -> Vec<Project> {
     projects
 }
 
-pub fn get_total_address(e: &Env) -> u32 {
-    e.storage().instance().get(&DataKeyAddress::TotalAddress).unwrap()
-}
+// pub fn get_total_address(e: &Env) -> u32 {
+//     e.storage().instance().get(&DataKeyAddress::TotalAddress).unwrap()
+// }
