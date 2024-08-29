@@ -13,13 +13,8 @@ enum DataKeyAddress {
 }
 
 pub fn get_project(e: &Env, project_id: u128) -> (Project, DataKey) {
-    // Obtener la clave del proyecto
     let project_key = DataKey::Project(project_id);
-
-    // Obtener el proyecto del almacenamiento
     let project: Project = e.storage().instance().get(&project_key).unwrap();
-
-    // Return the project and the key
     (project, project_key)
 }
 
